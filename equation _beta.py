@@ -102,29 +102,36 @@ class Math_string_piece(Math_string_base):
         print("listen to me",self.upper) 
 
 class sqrt:
+    def equal(one,another):
+        if one.inner == another.inner and one.outer == another.outer:
+            return True
+        else:
+            return False
     def __repr__(self):
         return str(self.outer)+'#'+str(self.inner)
     def __init__(self,sqrt_string):
         self.inner=Math_string(sqrt_string).expr
         self.outer=0
-    def pos_find(pos,area):
-        finder=pos.inner
-        for index,value in area.items():
+    def pos_find(pos,area):       
+        for index,fvalue in area.items():
             if isinstance(index,sqrt):
-                if finder == index.inner:
+                if pos.equal(index):
                    del area[index]
-                   return value
+                   return fvalue
         else:
             return 0
     def __add__(add1,add2):
         if isinstance(add2,int):
             return sqrt.__radd__(add1,add2)
-        add1.inner=add1.inner*add2.inner
-        add1.outer=add1.outer+add2.outer
-        return add1
+        res=sqrt('')
+        res.inner=add1.inner*add2.inner
+        res.outer=add1.outer+add2.outer
+        return res
     def __radd__(add1,number):
-        add1.outer+=number
-        return add1
+        res=sqrt('')
+        res.inner=add1.inner
+        res.outer=add1.outer+number
+        return res
 class dict_extension():
     def reverse(self):
         exchange=self.get_deno()
@@ -170,5 +177,5 @@ curse(int,"pos_find",int_extension.pos_find)
 x='x'               
 test_basic="-9x^2-((x+1)^2-10(5x-9)^3)+32+64+2x-7+(x-1)(x^2+9)=+10x-8+10"
 test_fraction="((x+1)/(x+2))/(x-10)=+100"
-test_sqrt="(x^2)(2#(x)+8#(x))=+10x"
+test_sqrt="2#(x)-(4-x)/(#(x))=+((2-x)#(x))/(4-x)"
 instance=Math_string(test_sqrt)
