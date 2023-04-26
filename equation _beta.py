@@ -1,8 +1,8 @@
 # here we use # to express sqrt() ^ to express **
 # must have '+' after '='
-# only one piece after '/'
-# the piece after / must be (...) 
-# e.g. 10/(x)
+# only one piece after '/' and '#'
+# the piece after / and # must be (...) 
+# e.g. 10/(x) #(x)
 class Math_string_base:
     def __next__(self):        
         i=self.index   #i point to the next
@@ -70,10 +70,13 @@ class Math_string_piece(Math_string_base):
         self.upper=father_string.expr
         self.sign=pdata[1]
         self.solver()
+        father_string.expr=self.upper
     def solver(self):
+        print(self.origin)
         mul={0:1}
         last={}
-        print(self.origin)
+        if self.sign == False:
+            mul={0:-1}
         for unit,index,type in self:  
 #            print(unit)
             if type == 'bracket':
@@ -90,20 +93,43 @@ class Math_string_piece(Math_string_base):
                     unit=unit*last
                     power-=1
             if unit == '/':
-                div=Math_string(self.origin[index+2:-2]).expr
-                mul=mul*div.get_deno()
-                mul[-1]=div
-                break
+                unit=Math_string(self.__next__()[0][1:-1]).expr.reverse()
             if unit == '#':
-                pass
+                unit={sqrt(self.__next__()[0][1:-1]):1}
             last=unit.copy()
-            mul=mul*unit
-        if self.sign == False:
-            mul=mul*{0:-1}
-        self.upper.update(self.upper+mul)
+            mul=mul*unit  
+        self.upper=self.upper+mul
         print("listen to me",self.upper) 
 
+class sqrt:
+    def __repr__(self):
+        return str(self.outer)+'#'+str(self.inner)
+    def __init__(self,sqrt_string):
+        self.inner=Math_string(sqrt_string).expr
+        self.outer=0
+    def pos_find(pos,area):
+        finder=pos.inner
+        for index,value in area.items():
+            if isinstance(index,sqrt):
+                if finder == index.inner:
+                   del area[index]
+                   return value
+        else:
+            return 0
+    def __add__(add1,add2):
+        if isinstance(add2,int):
+            return sqrt.__radd__(add1,add2)
+        add1.inner=add1.inner*add2.inner
+        add1.outer=add1.outer+add2.outer
+        return add1
+    def __radd__(add1,number):
+        add1.outer+=number
+        return add1
 class dict_extension():
+    def reverse(self):
+        exchange=self.get_deno()
+        exchange[-1]=self
+        return exchange
     def get_denominator(self):
         deno=self.setdefault(-1,{0:1})
         self.pop(-1)
@@ -116,28 +142,33 @@ class dict_extension():
         res=add1
         res[-1]=deno1*deno2    
         for key,value in add2.items():
-            res[key]=res.get(key,0)+value
+            res[key]=key.pos_find(res)+value
         return res
     def new_mul(m1,m2):
         res={}
         deno1=m1.get_deno()
         deno2=m2.get_deno()
         if deno1 != {0:1} or deno2 != {0:1}:
-            res[-1]=deno1*deno2
-             
+            res[-1]=deno1*deno2            
         for index1,v1 in m1.items():
             for index2,v2 in m2.items():
-                res[index1+index2]=res.get(index1+index2,0)+v1*v2
+                pos=index1+index2
+                res[pos]=pos.pos_find(res)+v1*v2
         return res
-   
-            
+class int_extension():
+    def pos_find(pos,area):
+        return area.get(pos,0)
+    
 
 from forbiddenfruit import curse
 curse(dict,"__add__",dict_extension.new_add)
 curse(dict,"__mul__",dict_extension.new_mul)
 curse(dict,"get_deno",dict_extension.get_denominator)
+curse(dict,"reverse",dict_extension.reverse)
+curse(int,"pos_find",int_extension.pos_find)
 
 x='x'               
 test_basic="-9x^2-((x+1)^2-10(5x-9)^3)+32+64+2x-7+(x-1)(x^2+9)=+10x-8+10"
-test_fraction="(10x-1)^2/(x^2)+(5x/((x+6)/(8x+7))-9)^2=+100"
-instance=Math_string(test_fraction)
+test_fraction="((x+1)/(x+2))/(x-10)=+100"
+test_sqrt="(x^2)(2#(x)+8#(x))=+10x"
+instance=Math_string(test_sqrt)
