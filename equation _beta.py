@@ -63,8 +63,7 @@ class Math_string(Math_string_base):
             self.origin='+'+self.origin
         self.sep()
     
-class Math_string_piece(Math_string_base):
-    
+class Math_string_piece(Math_string_base):   
     def __init__(self,pdata,father_string):
         self.origin=pdata[0]+'!'  # origin is a str
         self.upper=father_string.expr
@@ -82,7 +81,7 @@ class Math_string_piece(Math_string_base):
             if type == 'bracket':
                 unit=Math_string(unit[1:-1]).expr                             
             if type == 'number':                   
-                unit={0:int(unit)}              
+                unit={0:int(unit)}
             if unit == x:
                 unit={1:1}               
             if unit == '^':
@@ -95,7 +94,7 @@ class Math_string_piece(Math_string_base):
             if unit == '/':
                 unit=Math_string(self.__next__()[0][1:-1]).expr.reverse()
             if unit == '#':
-                unit={sqrt(self.__next__()[0][1:-1]):1}
+                unit={sqrt(self.__next__()[0][1:-1]):{0:1}}
             last=unit.copy()
             mul=mul*unit  
         self.upper=self.upper+mul
@@ -103,34 +102,32 @@ class Math_string_piece(Math_string_base):
 
 class sqrt:
     def equal(one,another):
-        if one.inner == another.inner and one.outer == another.outer:
-            return True
-        else:
-            return False
+        return one.inner == another.inner
     def __repr__(self):
-        return str(self.outer)+'#'+str(self.inner)
+        return '#'+str(self.inner)
     def __init__(self,sqrt_string):
         self.inner=Math_string(sqrt_string).expr
-        self.outer=0
-    def pos_find(pos,area):       
-        for index,fvalue in area.items():
+        self.tmp=0
+    def pos_set(pos,area,value):
+        value=value*{pos.tmp:1}
+        pos.tmp=0
+        for index in area:
             if isinstance(index,sqrt):
                 if pos.equal(index):
-                   del area[index]
-                   return fvalue
+                   area[index]+=value
+                   break
         else:
-            return 0
+            area[pos]=value
     def __add__(add1,add2):
         if isinstance(add2,int):
             return sqrt.__radd__(add1,add2)
         res=sqrt('')
         res.inner=add1.inner*add2.inner
-        res.outer=add1.outer+add2.outer
         return res
     def __radd__(add1,number):
         res=sqrt('')
         res.inner=add1.inner
-        res.outer=add1.outer+number
+        res.tmp=number
         return res
 class dict_extension():
     def reverse(self):
@@ -148,10 +145,14 @@ class dict_extension():
         add2=add2*deno1
         res=add1
         res[-1]=deno1*deno2    
-        for key,value in add2.items():
-            res[key]=key.pos_find(res)+value
+        for pos,value in add2.items():
+            pos.pos_set(res,value)
         return res
     def new_mul(m1,m2):
+        if isinstance(m2,int):
+            m2={0:m2}
+        if isinstance(m1,int):
+            m1={0:m1}
         res={}
         deno1=m1.get_deno()
         deno2=m2.get_deno()
@@ -160,11 +161,12 @@ class dict_extension():
         for index1,v1 in m1.items():
             for index2,v2 in m2.items():
                 pos=index1+index2
-                res[pos]=pos.pos_find(res)+v1*v2
+                pos.pos_set(res,v1*v2)
+#                res[pos]=pos.pos_find(res)+v1*v2   
         return res
 class int_extension():
-    def pos_find(pos,area):
-        return area.get(pos,0)
+    def pos_set(pos,area,value):
+        area[pos]=area.get(pos,0)+value
     
 
 from forbiddenfruit import curse
@@ -172,7 +174,7 @@ curse(dict,"__add__",dict_extension.new_add)
 curse(dict,"__mul__",dict_extension.new_mul)
 curse(dict,"get_deno",dict_extension.get_denominator)
 curse(dict,"reverse",dict_extension.reverse)
-curse(int,"pos_find",int_extension.pos_find)
+curse(int,"pos_set",int_extension.pos_set)
 
 x='x'               
 test_basic="-9x^2-((x+1)^2-10(5x-9)^3)+32+64+2x-7+(x-1)(x^2+9)=+10x-8+10"
